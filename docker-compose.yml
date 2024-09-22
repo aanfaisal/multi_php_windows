@@ -1,0 +1,74 @@
+version: "3.2"
+services:
+    app1:
+        build:
+            context: .
+            dockerfile: ./dockerfile/php-apache2.dockerfile
+            args:
+                - php_version=5.6
+                - app_name=app1
+        networks:
+            - route
+        restart: always
+        container_name: app1
+        volumes:
+            - ./app/app1:/var/www/html:Z
+            - ./config/php5.6/php.ini:/etc/php/5.6/cli/php.ini:Z
+            - ./config/apache2/app1.conf:/etc/apache2/sites-available/000-default.conf:Z
+            - ./log/app1:/var/log/apache2:Z
+
+    app2:
+        build:
+            context: .
+            dockerfile: ./dockerfile/php-apache2.dockerfile
+            args:
+                - php_version=8.0
+                - app_name=app2
+        networks:
+            - route
+        restart: always
+        container_name: app2
+        volumes:
+            - ./app/app2:/var/www/html:Z
+            - ./config/php8.0/php.ini:/etc/php/8.0/cli/php.ini:Z
+            - ./config/apache2/app2.conf:/etc/apache2/sites-available/000-default.conf:Z
+            - ./log/app2:/var/log/apache2:Z
+
+    app3:
+        build:
+            context: .
+            dockerfile: ./dockerfile/php-apache2.dockerfile
+            args:
+                - php_version=7.4
+                - app_name=app3
+        networks:
+            - route
+        restart: always
+        container_name: app3
+        volumes:
+            - ./app/app3:/var/www/html:Z
+            - ./config/php7.4/php.ini:/etc/php/7.4/cli/php.ini:Z
+            - ./config/apache2/app3.conf:/etc/apache2/sites-available/000-default.conf:Z
+            - ./log/app3:/var/log/apache2:Z
+
+    route:
+        build:
+            context: .
+            dockerfile: ./dockerfile/route.dockerfile
+        depends_on:
+            - app1
+            - app2
+            - app3
+        networks:
+            - route
+        restart: always
+        container_name: route
+        ports:
+            - "80:80"
+        volumes:
+            - ./log/route:/var/log/nginx:Z
+            - ./config/route:/etc/nginx/conf.d:Z
+        command:
+            nginx -g 'daemon off;'
+networks:
+    route:
