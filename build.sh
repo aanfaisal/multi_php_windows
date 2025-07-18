@@ -24,6 +24,18 @@ if [ -z "$Ver" ]; then
     exit 1
 fi
 
+# Validasi versi PHP yang didukung dengan Ubuntu 22.04
+case $Ver in
+    5.6|7.0|7.1|7.2|7.3|7.4|8.0|8.1|8.2|8.3)
+        echo "Using PHP version: $Ver with Ubuntu 22.04"
+        ;;
+    *)
+        echo "ERROR: Unsupported PHP version: $Ver"
+        echo "Supported versions with Ubuntu 22.04: 5.6, 7.0, 7.1, 7.2, 7.3, 7.4, 8.0, 8.1, 8.2, 8.3"
+        exit 1
+        ;;
+esac
+
 # Membuat file konfigurasi Apache jika belum ada
 if [ ! -f "./config/apache2/$Name.conf" ]; then
     echo "<VirtualHost *:80>
@@ -70,12 +82,12 @@ fi
 docker build -t "$Name":latest --build-arg php_version="$Ver" --build-arg app_name="$Name"  -f ./dockerfile/php-apache2.dockerfile ./dockerfile
 echo "Image created"
 
-if [[ $(docker inspect --format='{{.State.Running}}' "$Name") == "true" ]];
+if [[ $(docker inspect --format='{{.State.Running}}' "$Name" 2>/dev/null) == "true" ]];
 then
     docker stop "$Name"
 fi
 
-if [[ $(docker inspect --format='{{.State.Running}}' "$Name") == "false" ]];
+if [[ $(docker inspect --format='{{.State.Running}}' "$Name" 2>/dev/null) == "false" ]];
 then
     docker rm "$Name"
 fi

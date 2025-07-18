@@ -1,16 +1,19 @@
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 ARG php_version
 ARG app_name
 
-ENV php_version ${php_version:-5.6}
-ENV app_name ${php_version}
+ENV php_version ${php_version:-8.1}
+ENV app_name ${app_name}
+
+# Set non-interactive mode to avoid prompts
+ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update
 
 RUN apt-get install -y tzdata
 
-RUN export DEBIAN_FRONTEND=noninteractive && ln -fs /usr/share/zoneinfo/Asia/Jakarta /etc/localtime
+RUN ln -fs /usr/share/zoneinfo/Asia/Jakarta /etc/localtime
 
 RUN apt-get install -y -f software-properties-common
 
@@ -28,11 +31,16 @@ RUN apt-get install -y \
     php$php_version-pgsql \
     php$php_version-bcmath \
     php$php_version-bz2 \
-    php$php_version-memcache \
     php$php_version-xml \
     php$php_version-dom
 
-RUN if [ $php_version != 8.0 ] ; then apt-get install -y php$php_version-json ; fi
+# Install php-json only for versions that need it (PHP < 8.0)
+RUN if [ "$php_version" = "5.6" ] || [ "$php_version" = "7.0" ] || [ "$php_version" = "7.1" ] || [ "$php_version" = "7.2" ] || [ "$php_version" = "7.3" ] || [ "$php_version" = "7.4" ]; then \
+        apt-get install -y php$php_version-json; \
+    fi
+
+# Install memcache extension (handle different availability across versions)
+RUN apt-get install -y php$php_version-memcache || echo "memcache extension not available for PHP $php_version"
 
 RUN apt-get purge -y software-properties-common
 
